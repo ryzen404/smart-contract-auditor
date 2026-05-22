@@ -104,40 +104,24 @@ function analyzeContract(code: string): AuditResult {
   return { overallScore: score, riskLevel, findings, gasTips, bestPractices };
 }
 
-function RadarScanner({ progress }: { progress: number }) {
-  return (
-    <div style={{ position: 'relative', width: 200, height: 200, margin: '0 auto' }}>
-      <svg width="200" height="200" viewBox="0 0 200 200">
-        <circle cx="100" cy="100" r="90" fill="none" stroke="rgba(0,255,136,0.1)" strokeWidth="1" />
-        <circle cx="100" cy="100" r="70" fill="none" stroke="rgba(0,255,136,0.08)" strokeWidth="1" />
-        <circle cx="100" cy="100" r="50" fill="none" stroke="rgba(0,255,136,0.06)" strokeWidth="1" />
-        <circle cx="100" cy="100" r="30" fill="none" stroke="rgba(0,255,136,0.04)" strokeWidth="1" />
-        <line x1="100" y1="10" x2="100" y2="190" stroke="rgba(0,255,136,0.05)" strokeWidth="1" />
-        <line x1="10" y1="100" x2="190" y2="100" stroke="rgba(0,255,136,0.05)" strokeWidth="1" />
-        <line x1="100" y1="100" x2={100 + 90 * Math.cos((progress * 3.6 - 90) * Math.PI / 180)} y2={100 + 90 * Math.sin((progress * 3.6 - 90) * Math.PI / 180)} stroke="#00ff88" strokeWidth="2" style={{ filter: 'drop-shadow(0 0 6px #00ff88)' }}>
-          <animateTransform attributeName="transform" type="rotate" from="0 100 100" to="360 100 100" dur="2s" repeatCount="indefinite" />
-        </line>
-        <circle cx="100" cy="100" r="4" fill="#00ff88" style={{ filter: 'drop-shadow(0 0 8px #00ff88)' }} />
-      </svg>
-      <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', textAlign: 'center' }}>
-        <div style={{ fontSize: 28, fontWeight: 900, color: '#00ff88', fontFamily: 'JetBrains Mono, monospace', textShadow: '0 0 20px rgba(0,255,136,0.5)' }}>{progress}%</div>
-        <div style={{ fontSize: 9, color: 'rgba(0,255,136,0.6)', letterSpacing: 3, textTransform: 'uppercase' }}>Scanning</div>
-      </div>
-    </div>
-  );
-}
-
-function GlowRing({ score, size = 120 }: { score: number; size?: number }) {
-  const color = score >= 80 ? '#00ff88' : score >= 60 ? '#ffaa00' : '#ff3366';
+function GlowRing({ score, size = 100 }: { score: number; size?: number }) {
+  const color = score >= 80 ? '#10b981' : score >= 60 ? '#f59e0b' : '#ef4444';
+  const bg = score >= 80 ? '#ecfdf5' : score >= 60 ? '#fffbeb' : '#fef2f2';
   const radius = size / 2 - 8;
   const circumference = 2 * Math.PI * radius;
   const offset = circumference - (score / 100) * circumference;
 
   return (
-    <svg width={size} height={size} style={{ transform: 'rotate(-90deg)' }}>
-      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth="6" />
-      <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={color} strokeWidth="6" strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" style={{ filter: `drop-shadow(0 0 8px ${color})`, transition: 'stroke-dashoffset 1s ease' }} />
-    </svg>
+    <div style={{ position: 'relative', width: size, height: size, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <svg width={size} height={size} style={{ transform: 'rotate(-90deg)', position: 'absolute' }}>
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke="#e5e7eb" strokeWidth="6" />
+        <circle cx={size / 2} cy={size / 2} r={radius} fill="none" stroke={color} strokeWidth="6" strokeDasharray={circumference} strokeDashoffset={offset} strokeLinecap="round" style={{ transition: 'stroke-dashoffset 1s ease' }} />
+      </svg>
+      <div style={{ textAlign: 'center', zIndex: 1 }}>
+        <div style={{ fontSize: 26, fontWeight: 800, color, fontFamily: 'JetBrains Mono, monospace' }}>{score}</div>
+        <div style={{ fontSize: 9, letterSpacing: 1, color: '#9ca3af', textTransform: 'uppercase', fontWeight: 600 }}>{riskLevel}</div>
+      </div>
+    </div>
   );
 }
 
@@ -145,11 +129,9 @@ export default function Home() {
   const [code, setCode] = useState('');
   const [result, setResult] = useState<AuditResult | null>(null);
   const [scanning, setScanning] = useState(false);
-  const [scanProgress, setScanProgress] = useState(0);
   const [activeTab, setActiveTab] = useState<'security' | 'gas' | 'practices'>('security');
   const [showLanding, setShowLanding] = useState(true);
   const [mounted, setMounted] = useState(false);
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => { setMounted(true); }, []);
 
@@ -158,85 +140,58 @@ export default function Home() {
     setScanning(true);
     setResult(null);
     setShowLanding(false);
-    setScanProgress(0);
-    let p = 0;
-    intervalRef.current = setInterval(() => {
-      p += Math.random() * 15 + 5;
-      if (p >= 100) { p = 100; if (intervalRef.current) clearInterval(intervalRef.current); }
-      setScanProgress(Math.min(100, Math.round(p)));
-    }, 200);
-    setTimeout(() => {
-      if (intervalRef.current) clearInterval(intervalRef.current);
-      setScanProgress(100);
-      setTimeout(() => { setResult(analyzeContract(code)); setScanning(false); }, 400);
-    }, 2500);
+    setTimeout(() => { setResult(analyzeContract(code)); setScanning(false); }, 2000);
   };
 
-  const sevColor = (s: string) => s === 'critical' ? '#ff3366' : s === 'high' ? '#ff6644' : s === 'medium' ? '#ffaa00' : s === 'low' ? '#00ff88' : '#4488ff';
-  const scoreColor = (n: number) => n >= 80 ? '#00ff88' : n >= 60 ? '#ffaa00' : '#ff3366';
+  const sevColor = (s: string) => s === 'critical' ? '#ef4444' : s === 'high' ? '#f97316' : s === 'medium' ? '#f59e0b' : s === 'low' ? '#10b981' : '#6366f1';
+  const sevBg = (s: string) => s === 'critical' ? '#fef2f2' : s === 'high' ? '#fff7ed' : s === 'medium' ? '#fffbeb' : s === 'low' ? '#ecfdf5' : '#eef2ff';
+  const scoreColor = (n: number) => n >= 80 ? '#10b981' : n >= 60 ? '#f59e0b' : '#ef4444';
 
   if (!mounted) return null;
 
   return (
-    <div style={{ minHeight: '100vh', background: '#07080c', color: '#e0e0e8', overflow: 'hidden' }}>
+    <div style={{ minHeight: '100vh', background: '#f8fafc', color: '#1e293b' }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
-        @keyframes scanline { 0% { top: -2px; } 100% { top: 100%; } }
-        @keyframes fadeInUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
-        @keyframes gridPulse { 0%,100% { opacity: 0.03; } 50% { opacity: 0.06; } }
-        @keyframes typewriter { from { width: 0; } to { width: 100%; } }
-        @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0; } }
-        .grid-bg {
-          background-image:
-            linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
-          background-size: 40px 40px;
-          animation: gridPulse 4s ease-in-out infinite;
-        }
-        .scanline-overlay::after {
-          content: '';
-          position: absolute;
-          top: 0; left: 0; right: 0;
-          height: 2px;
-          background: linear-gradient(90deg, transparent, rgba(0,255,136,0.15), transparent);
-          animation: scanline 3s linear infinite;
-          pointer-events: none;
-        }
+        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
         .finding-card {
-          background: linear-gradient(135deg, rgba(15,15,25,0.9), rgba(20,20,35,0.9));
-          border: 1px solid rgba(255,255,255,0.06);
-          backdrop-filter: blur(10px);
-          transition: all 0.3s ease;
+          background: #fff;
+          border: 1px solid #e5e7eb;
+          border-radius: 12px;
+          transition: all 0.2s ease;
+          box-shadow: 0 1px 3px rgba(0,0,0,0.04);
         }
         .finding-card:hover {
-          border-color: rgba(0,255,136,0.2);
-          transform: translateX(4px);
-          box-shadow: -4px 0 20px rgba(0,255,136,0.1);
+          border-color: #cbd5e1;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+          transform: translateY(-2px);
         }
         .tab-btn {
           position: relative;
           background: none;
           border: none;
-          color: rgba(255,255,255,0.4);
+          color: #94a3b8;
           padding: 14px 20px;
           font-size: 13px;
-          font-weight: 500;
+          font-weight: 600;
           cursor: pointer;
-          transition: all 0.3s;
-          font-family: 'Space Grotesk', sans-serif;
+          transition: all 0.2s;
+          font-family: 'Inter', sans-serif;
         }
-        .tab-btn.active { color: #00ff88; }
+        .tab-btn.active { color: #6366f1; }
         .tab-btn.active::after {
           content: '';
           position: absolute;
           bottom: 0; left: 20%; right: 20%;
           height: 2px;
-          background: #00ff88;
-          box-shadow: 0 0 10px #00ff88;
+          background: #6366f1;
+          border-radius: 2px;
         }
         .editor-area {
-          background: #0a0b10;
-          color: #c8c8d8;
+          background: #fff;
+          color: #334155;
           border: none;
           padding: 24px;
           font-size: 13px;
@@ -246,118 +201,98 @@ export default function Home() {
           font-family: 'JetBrains Mono', monospace;
           width: 100%;
           height: 100%;
-          tab-size: 4;
         }
-        .editor-area::placeholder { color: rgba(255,255,255,0.15); }
+        .editor-area::placeholder { color: #cbd5e1; }
         .action-btn {
           padding: 10px 28px;
-          border-radius: 8px;
+          border-radius: 10px;
           border: none;
           font-size: 13px;
           font-weight: 600;
           cursor: pointer;
-          font-family: 'Space Grotesk', sans-serif;
-          transition: all 0.3s;
+          font-family: 'Inter', sans-serif;
+          transition: all 0.2s;
         }
         .primary-btn {
-          background: linear-gradient(135deg, #00ff88, #00cc6a);
-          color: #07080c;
-          box-shadow: 0 4px 20px rgba(0,255,136,0.25);
+          background: linear-gradient(135deg, #6366f1, #8b5cf6);
+          color: #fff;
+          box-shadow: 0 2px 10px rgba(99,102,241,0.3);
         }
-        .primary-btn:hover { box-shadow: 0 4px 30px rgba(0,255,136,0.4); transform: translateY(-1px); }
-        .primary-btn:disabled { opacity: 0.3; cursor: wait; transform: none; box-shadow: none; }
+        .primary-btn:hover { box-shadow: 0 4px 16px rgba(99,102,241,0.4); transform: translateY(-1px); }
+        .primary-btn:disabled { opacity: 0.5; cursor: wait; transform: none; box-shadow: none; }
         .ghost-btn {
-          background: rgba(255,255,255,0.05);
-          color: rgba(255,255,255,0.5);
-          border: 1px solid rgba(255,255,255,0.1);
+          background: #f1f5f9;
+          color: #64748b;
+          border: 1px solid #e2e8f0;
         }
-        .ghost-btn:hover { background: rgba(255,255,255,0.08); color: rgba(255,255,255,0.8); }
-        .agent-badge {
-          padding: 4px 10px;
-          border-radius: 4px;
-          font-size: 10px;
-          font-weight: 600;
-          letter-spacing: 1px;
-          text-transform: uppercase;
-          font-family: 'JetBrains Mono', monospace;
-        }
-        .sev-dot {
-          width: 8px; height: 8px;
-          border-radius: 50%;
-          display: inline-block;
-          box-shadow: 0 0 6px currentColor;
-        }
+        .ghost-btn:hover { background: #e2e8f0; color: #475569; }
       `}</style>
 
-      {/* Top bar */}
-      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 24px', height: 52, borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(7,8,12,0.95)', backdropFilter: 'blur(20px)', position: 'sticky', top: 0, zIndex: 100 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
-          <div style={{ width: 28, height: 28, borderRadius: 6, background: 'linear-gradient(135deg, #00ff88, #00cc6a)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 900, color: '#07080c', boxShadow: '0 0 15px rgba(0,255,136,0.3)' }}>S</div>
+      {/* Header */}
+      <header style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 28px', height: 56, borderBottom: '1px solid #e2e8f0', background: '#fff', position: 'sticky', top: 0, zIndex: 100 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+          <div style={{ width: 32, height: 32, borderRadius: 10, background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15, fontWeight: 900, color: '#fff' }}>S</div>
           <div>
-            <span style={{ fontSize: 14, fontWeight: 700, fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '-0.5px' }}>SmartContract</span>
-            <span style={{ fontSize: 14, fontWeight: 300, fontFamily: 'Space Grotesk, sans-serif', color: 'rgba(255,255,255,0.4)', marginLeft: 6 }}>Auditor</span>
+            <span style={{ fontSize: 15, fontWeight: 800, fontFamily: 'Inter, sans-serif', color: '#1e293b' }}>SmartContract</span>
+            <span style={{ fontSize: 15, fontWeight: 400, fontFamily: 'Inter, sans-serif', color: '#94a3b8', marginLeft: 6 }}>Auditor</span>
           </div>
         </div>
         <div style={{ display: 'flex', gap: 6 }}>
-          {[['SECURITY', '#ff3366'], ['GAS', '#ffaa00'], ['PRACTICES', '#00ff88']].map(([label, color], i) => (
-            <span key={i} style={{ padding: '3px 10px', borderRadius: 4, fontSize: 9, fontWeight: 700, letterSpacing: 1.5, fontFamily: 'JetBrains Mono, monospace', color: color as string, background: `${color}10`, border: `1px solid ${color}25` }}>{label}</span>
+          {[['SECURITY', '#ef4444'], ['GAS', '#f59e0b'], ['PRACTICES', '#10b981']].map(([label, color], i) => (
+            <span key={i} style={{ padding: '4px 10px', borderRadius: 6, fontSize: 9, fontWeight: 700, letterSpacing: 1.2, color: color as string, background: `${color}12`, border: `1px solid ${color}20` }}>{label}</span>
           ))}
         </div>
       </header>
 
       {showLanding && !result ? (
-        /* Landing */
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 52px)', padding: 40, position: 'relative' }} className="grid-bg">
-          <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'radial-gradient(ellipse at 50% 30%, rgba(0,255,136,0.04) 0%, transparent 70%)', pointerEvents: 'none' }} />
-          <div style={{ position: 'relative', textAlign: 'center', maxWidth: 700 }}>
-            <div style={{ fontSize: 10, letterSpacing: 6, textTransform: 'uppercase', color: 'rgba(0,255,136,0.5)', marginBottom: 20, fontFamily: 'JetBrains Mono, monospace' }}>Multi-Agent Security Platform</div>
-            <h1 style={{ fontSize: 52, fontWeight: 700, lineHeight: 1.1, marginBottom: 20, fontFamily: 'Space Grotesk, sans-serif', letterSpacing: '-2px' }}>
-              <span style={{ color: '#fff' }}>Smart</span><span style={{ color: '#00ff88', textShadow: '0 0 30px rgba(0,255,136,0.3)' }}>Contract</span><br />
-              <span style={{ color: 'rgba(255,255,255,0.3)', fontWeight: 300 }}>AI Auditor</span>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 56px)', padding: 40 }}>
+          <div style={{ textAlign: 'center', maxWidth: 700, position: 'relative' }}>
+            <div style={{ fontSize: 10, letterSpacing: 5, textTransform: 'uppercase', color: '#a5b4fc', marginBottom: 20, fontWeight: 700 }}>Multi-Agent Security Platform</div>
+            <h1 style={{ fontSize: 52, fontWeight: 900, lineHeight: 1.1, marginBottom: 20, fontFamily: 'Inter, sans-serif', letterSpacing: '-2px' }}>
+              <span style={{ color: '#1e293b' }}>Smart</span><span style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>Contract</span><br />
+              <span style={{ color: '#94a3b8', fontWeight: 300 }}>AI Auditor</span>
             </h1>
-            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: 15, lineHeight: 1.7, marginBottom: 50, maxWidth: 500, margin: '0 auto 50px' }}>
-              Three specialized AI agents analyze your Solidity contracts for <span style={{ color: '#ff3366' }}>vulnerabilities</span>, <span style={{ color: '#ffaa00' }}>gas waste</span>, and <span style={{ color: '#00ff88' }}>bad practices</span>.
+            <p style={{ color: '#64748b', fontSize: 16, lineHeight: 1.7, marginBottom: 50, maxWidth: 520, margin: '0 auto 50px' }}>
+              Three specialized AI agents analyze your Solidity contracts for <span style={{ color: '#ef4444', fontWeight: 600 }}>vulnerabilities</span>, <span style={{ color: '#f59e0b', fontWeight: 600 }}>gas waste</span>, and <span style={{ color: '#10b981', fontWeight: 600 }}>bad practices</span>.
             </p>
-            <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginBottom: 60 }}>
+            <div style={{ display: 'flex', gap: 16, justifyContent: 'center', marginBottom: 50 }}>
               {[
-                { icon: '/u{1F6E1}', label: 'Security', desc: 'Reentrancy, access control, overflow', color: '#ff3366', glow: 'rgba(255,51,102,0.15)' },
-                { icon: '/u26A1', label: 'Gas', desc: 'Storage packing, calldata, unchecked', color: '#ffaa00', glow: 'rgba(255,170,0,0.15)' },
-                { icon: '/u2713', label: 'Practices', desc: 'Events, NatSpec, Pausable', color: '#00ff88', glow: 'rgba(0,255,136,0.15)' },
+                { label: 'Security', desc: 'Reentrancy, access control, overflow', color: '#ef4444', bg: '#fef2f2' },
+                { label: 'Gas', desc: 'Storage packing, calldata, unchecked', color: '#f59e0b', bg: '#fffbeb' },
+                { label: 'Practices', desc: 'Events, NatSpec, Pausable', color: '#10b981', bg: '#ecfdf5' },
               ].map((a, i) => (
-                <div key={i} style={{ background: 'rgba(15,15,25,0.6)', border: `1px solid ${a.color}20`, borderRadius: 12, padding: '30px 24px', width: 200, textAlign: 'center', backdropFilter: 'blur(10px)', transition: 'all 0.3s', cursor: 'default' }}
-                  onMouseEnter={e => { e.currentTarget.style.borderColor = a.color + '40'; e.currentTarget.style.boxShadow = `0 0 30px ${a.glow}`; }}
-                  onMouseLeave={e => { e.currentTarget.style.borderColor = a.color + '20'; e.currentTarget.style.boxShadow = 'none'; }}>
-                  <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: 2, color: a.color, marginBottom: 10, fontFamily: 'JetBrains Mono, monospace' }}>{a.label.toUpperCase()}</div>
-                  <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.3)', lineHeight: 1.5 }}>{a.desc}</div>
+                <div key={i} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 16, padding: '28px 22px', width: 200, textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', transition: 'all 0.2s', cursor: 'default' }}
+                  onMouseEnter={e => { e.currentTarget.style.boxShadow = `0 8px 24px ${a.color}15`; e.currentTarget.style.borderColor = a.color + '40'; }}
+                  onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)'; e.currentTarget.style.borderColor = '#e5e7eb'; }}>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: a.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px', fontSize: 18 }}>{i === 0 ? '/u{1F6E1}' : i === 1 ? '/u26A1' : '/u2713'}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: a.color, marginBottom: 6 }}>{a.label}</div>
+                  <div style={{ fontSize: 11, color: '#94a3b8', lineHeight: 1.5 }}>{a.desc}</div>
                 </div>
               ))}
             </div>
-            <button onClick={() => setShowLanding(false)} className="action-btn primary-btn" style={{ fontSize: 15, padding: '14px 48px' }}>
-              Start Audit
-            </button>
+            <button onClick={() => setShowLanding(false)} className="action-btn primary-btn" style={{ fontSize: 15, padding: '14px 48px' }}>Start Audit</button>
           </div>
         </div>
       ) : (
-        /* Auditor */
-        <div style={{ display: 'flex', height: 'calc(100vh - 52px)' }}>
+        <div style={{ display: 'flex', height: 'calc(100vh - 56px)' }}>
           {/* Editor */}
-          <div style={{ width: '48%', display: 'flex', flexDirection: 'column', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 16px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(10,11,16,0.8)' }}>
+          <div style={{ width: '48%', display: 'flex', flexDirection: 'column', borderRight: '1px solid #e2e8f0', background: '#fff' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 16px', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#ff3366' }} />
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#ffaa00' }} />
-                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#00ff88' }} />
-                <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.25)', marginLeft: 10, fontFamily: 'JetBrains Mono, monospace' }}>contract.sol</span>
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#ef4444' }} />
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#f59e0b' }} />
+                <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#10b981' }} />
+                <span style={{ fontSize: 11, color: '#94a3b8', marginLeft: 10, fontFamily: 'JetBrains Mono, monospace' }}>contract.sol</span>
               </div>
               <div style={{ display: 'flex', gap: 8 }}>
                 <button onClick={() => setCode(SAMPLE_CONTRACT)} className="action-btn ghost-btn" style={{ padding: '6px 14px', fontSize: 11 }}>Sample</button>
                 <button onClick={handleAudit} disabled={scanning || !code.trim()} className="action-btn primary-btn" style={{ padding: '6px 20px', fontSize: 11 }}>{scanning ? 'Scanning...' : 'Run Audit'}</button>
               </div>
             </div>
-            <div style={{ flex: 1, position: 'relative' }} className="scanline-overlay">
-              <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 48, background: 'rgba(255,255,255,0.02)', borderRight: '1px solid rgba(255,255,255,0.04)', display: 'flex', flexDirection: 'column', paddingTop: 24, overflow: 'hidden' }}>
+            <div style={{ flex: 1, position: 'relative' }}>
+              <div style={{ position: 'absolute', left: 0, top: 0, bottom: 0, width: 48, background: '#f8fafc', borderRight: '1px solid #e2e8f0', display: 'flex', flexDirection: 'column', paddingTop: 24, overflow: 'hidden' }}>
                 {(code.split('\n').map((_, i) => (
-                  <div key={i} style={{ height: '1.8em', fontSize: 11, color: 'rgba(255,255,255,0.15)', textAlign: 'right', paddingRight: 12, fontFamily: 'JetBrains Mono, monospace' }}>{i + 1}</div>
+                  <div key={i} style={{ height: '1.8em', fontSize: 11, color: '#cbd5e1', textAlign: 'right', paddingRight: 12, fontFamily: 'JetBrains Mono, monospace' }}>{i + 1}</div>
                 )))}
               </div>
               <textarea value={code} onChange={e => setCode(e.target.value)} placeholder="// Paste Solidity contract..." spellCheck={false} className="editor-area" style={{ paddingLeft: 60 }} />
@@ -365,15 +300,15 @@ export default function Home() {
           </div>
 
           {/* Results */}
-          <div style={{ width: '52%', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: 'rgba(7,8,12,0.5)' }}>
+          <div style={{ width: '52%', display: 'flex', flexDirection: 'column', overflow: 'hidden', background: '#f8fafc' }}>
             {scanning && (
-              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 30 }} className="grid-bg">
-                <RadarScanner progress={scanProgress} />
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 24 }}>
+                <div style={{ width: 56, height: 56, borderRadius: '50%', border: '3px solid #e5e7eb', borderTopColor: '#6366f1', animation: 'spin 0.8s linear infinite' }} />
                 <div style={{ textAlign: 'center' }}>
-                  <div style={{ fontSize: 14, fontWeight: 600, color: '#00ff88', fontFamily: 'Space Grotesk, sans-serif', marginBottom: 8 }}>Multi-Agent Analysis</div>
-                  <div style={{ display: 'flex', gap: 20, justifyContent: 'center' }}>
+                  <div style={{ fontSize: 16, fontWeight: 700, color: '#1e293b', marginBottom: 6 }}>Analyzing Contract...</div>
+                  <div style={{ display: 'flex', gap: 16, justifyContent: 'center' }}>
                     {['Security', 'Gas', 'Practices'].map((a, i) => (
-                      <span key={i} style={{ fontSize: 10, color: 'rgba(0,255,136,0.4)', fontFamily: 'JetBrains Mono, monospace', letterSpacing: 1 }}>{a}</span>
+                      <span key={i} style={{ fontSize: 11, color: '#94a3b8', animation: `pulse 1.5s ${i * 0.3}s infinite` }}>{a}</span>
                     ))}
                   </div>
                 </div>
@@ -383,23 +318,17 @@ export default function Home() {
             {result && !scanning && (
               <div style={{ flex: 1, overflow: 'auto' }}>
                 {/* Score */}
-                <div style={{ padding: '28px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(10,11,16,0.5)' }}>
+                <div style={{ padding: '24px', borderBottom: '1px solid #e2e8f0', background: '#fff' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-                    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <GlowRing score={result.overallScore} size={100} />
-                      <div style={{ position: 'absolute', textAlign: 'center' }}>
-                        <div style={{ fontSize: 28, fontWeight: 800, color: scoreColor(result.overallScore), fontFamily: 'JetBrains Mono, monospace', textShadow: `0 0 20px ${scoreColor(result.overallScore)}40` }}>{result.overallScore}</div>
-                        <div style={{ fontSize: 8, letterSpacing: 2, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase' }}>{result.riskLevel}</div>
-                      </div>
-                    </div>
+                    <GlowRing score={result.overallScore} />
                     <div style={{ flex: 1 }}>
-                      <div style={{ fontSize: 18, fontWeight: 700, fontFamily: 'Space Grotesk, sans-serif', marginBottom: 6 }}>Audit Complete</div>
-                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.35)', marginBottom: 12 }}>{result.findings.length} findings | {result.gasTips.length} gas tips | {result.bestPractices.length} recommendations</div>
+                      <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 4 }}>Audit Complete</div>
+                      <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 10 }}>{result.findings.length} findings | {result.gasTips.length} gas tips | {result.bestPractices.length} recommendations</div>
                       <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                         {(['critical', 'high', 'medium', 'low'] as const).map(s => {
                           const count = result.findings.filter(f => f.severity === s).length;
                           if (!count) return null;
-                          return <span key={s} style={{ display: 'flex', alignItems: 'center', gap: 5, padding: '3px 10px', borderRadius: 4, fontSize: 10, fontWeight: 600, background: `${sevColor(s)}10`, color: sevColor(s), border: `1px solid ${sevColor(s)}20`, fontFamily: 'JetBrains Mono, monospace' }}><span className="sev-dot" style={{ color: sevColor(s), background: sevColor(s) }} />{count} {s}</span>;
+                          return <span key={s} style={{ padding: '3px 10px', borderRadius: 6, fontSize: 10, fontWeight: 700, background: sevBg(s), color: sevColor(s), border: `1px solid ${sevColor(s)}20` }}>{count} {s}</span>;
                         })}
                       </div>
                     </div>
@@ -407,7 +336,7 @@ export default function Home() {
                 </div>
 
                 {/* Tabs */}
-                <div style={{ display: 'flex', borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(7,8,12,0.8)' }}>
+                <div style={{ display: 'flex', borderBottom: '1px solid #e2e8f0', background: '#fff' }}>
                   {([['security', `Security (${result.findings.length})`], ['gas', `Gas (${result.gasTips.length})`], ['practices', `Practices (${result.bestPractices.length})`]] as const).map(([key, label]) => (
                     <button key={key} onClick={() => setActiveTab(key)} className={`tab-btn ${activeTab === key ? 'active' : ''}`}>{label}</button>
                   ))}
@@ -416,30 +345,30 @@ export default function Home() {
                 {/* Content */}
                 <div style={{ padding: 20 }}>
                   {activeTab === 'security' && result.findings.map((f, i) => (
-                    <div key={f.id} className="finding-card" style={{ borderRadius: 10, padding: '16px 20px', marginBottom: 10, animation: `fadeInUp 0.3s ${i * 0.05}s both` }}>
+                    <div key={f.id} className="finding-card" style={{ padding: '16px 20px', marginBottom: 10, animation: `fadeInUp 0.3s ${i * 0.05}s both` }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
-                        <span style={{ padding: '2px 8px', borderRadius: 3, fontSize: 9, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', background: `${sevColor(f.severity)}15`, color: sevColor(f.severity), fontFamily: 'JetBrains Mono, monospace' }}>{f.severity}</span>
-                        <span style={{ fontSize: 10, color: 'rgba(255,255,255,0.2)', fontFamily: 'JetBrains Mono, monospace' }}>{f.id}</span>
-                        <span className="agent-badge" style={{ marginLeft: 'auto', color: '#4488ff', background: 'rgba(68,136,255,0.1)', border: '1px solid rgba(68,136,255,0.2)' }}>{f.agent}</span>
+                        <span style={{ padding: '2px 8px', borderRadius: 4, fontSize: 9, fontWeight: 700, letterSpacing: 1, textTransform: 'uppercase', background: sevBg(f.severity), color: sevColor(f.severity) }}>{f.severity}</span>
+                        <span style={{ fontSize: 10, color: '#94a3b8', fontFamily: 'JetBrains Mono, monospace' }}>{f.id}</span>
+                        <span style={{ marginLeft: 'auto', padding: '3px 8px', borderRadius: 4, fontSize: 9, fontWeight: 700, color: '#6366f1', background: '#eef2ff', letterSpacing: 0.5 }}>{f.agent}</span>
                       </div>
-                      <div style={{ fontWeight: 600, fontSize: 14, marginBottom: 6 }}>{f.title}</div>
-                      <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.4)', lineHeight: 1.6, marginBottom: 10 }}>{f.description}</div>
-                      {f.line && <div style={{ background: 'rgba(255,51,102,0.06)', borderRadius: 6, padding: '8px 14px', fontSize: 11, color: '#ff6688', fontFamily: 'JetBrains Mono, monospace', marginBottom: 10, borderLeft: '2px solid #ff3366' }}>{f.line}</div>}
-                      {f.fix && <div style={{ background: 'rgba(0,255,136,0.04)', borderRadius: 6, padding: '10px 14px', fontSize: 11, color: '#00ff88', lineHeight: 1.5, borderLeft: '2px solid #00ff88' }}><span style={{ fontWeight: 700, opacity: 0.7 }}>FIX</span> {f.fix}</div>}
+                      <div style={{ fontWeight: 700, fontSize: 14, marginBottom: 6, color: '#1e293b' }}>{f.title}</div>
+                      <div style={{ fontSize: 12, color: '#64748b', lineHeight: 1.6, marginBottom: 10 }}>{f.description}</div>
+                      {f.line && <div style={{ background: '#fef2f2', borderRadius: 8, padding: '8px 14px', fontSize: 11, color: '#dc2626', fontFamily: 'JetBrains Mono, monospace', marginBottom: 10, borderLeft: '3px solid #ef4444' }}>{f.line}</div>}
+                      {f.fix && <div style={{ background: '#ecfdf5', borderRadius: 8, padding: '10px 14px', fontSize: 11, color: '#059669', lineHeight: 1.5, borderLeft: '3px solid #10b981' }}><strong>Fix:</strong> {f.fix}</div>}
                     </div>
                   ))}
 
                   {activeTab === 'gas' && result.gasTips.map((tip, i) => (
-                    <div key={i} className="finding-card" style={{ borderRadius: 10, padding: '14px 20px', marginBottom: 8, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                      <span style={{ color: '#ffaa00', fontSize: 6, lineHeight: 2.5 }}>{'/u25CF'}</span>
-                      <div style={{ fontSize: 12, lineHeight: 1.6, color: 'rgba(255,255,255,0.6)' }}>{tip}</div>
+                    <div key={i} className="finding-card" style={{ padding: '14px 20px', marginBottom: 8, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                      <div style={{ width: 24, height: 24, borderRadius: 6, background: '#fffbeb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1, fontSize: 12 }}>{'/u26A1'}</div>
+                      <div style={{ fontSize: 13, lineHeight: 1.6, color: '#475569' }}>{tip}</div>
                     </div>
                   ))}
 
                   {activeTab === 'practices' && result.bestPractices.map((bp, i) => (
-                    <div key={i} className="finding-card" style={{ borderRadius: 10, padding: '14px 20px', marginBottom: 8, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                      <span style={{ color: '#00ff88', fontSize: 6, lineHeight: 2.5 }}>{'/u25CF'}</span>
-                      <div style={{ fontSize: 12, lineHeight: 1.6, color: 'rgba(255,255,255,0.6)' }}>{bp}</div>
+                    <div key={i} className="finding-card" style={{ padding: '14px 20px', marginBottom: 8, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+                      <div style={{ width: 24, height: 24, borderRadius: 6, background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1, fontSize: 12 }}>{'/u2713'}</div>
+                      <div style={{ fontSize: 13, lineHeight: 1.6, color: '#475569' }}>{bp}</div>
                     </div>
                   ))}
                 </div>
@@ -447,11 +376,9 @@ export default function Home() {
             )}
 
             {!result && !scanning && (
-              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12 }} className="grid-bg">
-                <div style={{ width: 60, height: 60, borderRadius: '50%', border: '2px solid rgba(0,255,136,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                  <div style={{ fontSize: 24, opacity: 0.2 }}>{'/u{1F50D}'}</div>
-                </div>
-                <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: 13, fontFamily: 'Space Grotesk, sans-serif' }}>Paste a contract to begin</div>
+              <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12 }}>
+                <div style={{ width: 64, height: 64, borderRadius: 16, background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>{'/u{1F50D}'}</div>
+                <div style={{ color: '#94a3b8', fontSize: 14, fontWeight: 500 }}>Paste a contract to begin</div>
               </div>
             )}
           </div>
