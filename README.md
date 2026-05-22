@@ -2,6 +2,14 @@
 
 Multi-agent AI system that analyzes Solidity smart contracts for security vulnerabilities, gas optimization, and best practices.
 
+## Live Demo
+
+**[smart-contract-auditor-three.vercel.app](https://smart-contract-auditor-three.vercel.app/)**
+
+![Landing Page](public/screenshots/landing.png)
+
+![Audit Results](public/screenshots/audit-results.png)
+
 ## Features
 
 - **Security Agent** — Detects reentrancy, access control issues, integer overflow, unsafe transfers, missing events, and zero-amount checks
