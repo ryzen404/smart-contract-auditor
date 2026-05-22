@@ -104,7 +104,7 @@ function analyzeContract(code: string): AuditResult {
   return { overallScore: score, riskLevel, findings, gasTips, bestPractices };
 }
 
-function GlowRing({ score, size = 100 }: { score: number; size?: number }) {
+function GlowRing({ score, riskLevel, size = 100 }: { score: number; riskLevel: string; size?: number }) {
   const color = score >= 80 ? '#10b981' : score >= 60 ? '#f59e0b' : '#ef4444';
   const bg = score >= 80 ? '#ecfdf5' : score >= 60 ? '#fffbeb' : '#fef2f2';
   const radius = size / 2 - 8;
@@ -320,7 +320,7 @@ export default function Home() {
                 {/* Score */}
                 <div style={{ padding: '24px', borderBottom: '1px solid #e2e8f0', background: '#fff' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
-                    <GlowRing score={result.overallScore} />
+                    <GlowRing score={result.overallScore} riskLevel={result.riskLevel} />
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: 18, fontWeight: 800, marginBottom: 4 }}>Audit Complete</div>
                       <div style={{ fontSize: 12, color: '#94a3b8', marginBottom: 10 }}>{result.findings.length} findings | {result.gasTips.length} gas tips | {result.bestPractices.length} recommendations</div>
