@@ -1,36 +1,42 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SmartContract AI Auditor
 
-## Getting Started
+Multi-agent AI system that analyzes Solidity smart contracts for security vulnerabilities, gas optimization, and best practices.
 
-First, run the development server:
+## Features
+
+- **Security Agent** — Detects reentrancy, access control issues, integer overflow, unsafe transfers, missing events, and zero-amount checks
+- **Gas Agent** — Identifies storage packing opportunities, calldata optimization, unchecked arithmetic, and deployment cost reductions
+- **Best Practices Agent** — Checks NatSpec documentation, event emissions, Pausable implementation, and input validation
+- **Risk Score** — 0-100 score with Critical/High/Medium/Low risk classification
+- **Fix Suggestions** — Actionable remediation for every finding
+- **Code Highlighting** — Pinpoints exact vulnerable lines with fix context
+
+## How It Works
+
+1. Paste your Solidity contract into the editor
+2. Click **Run Audit**
+3. Three specialized agents analyze the contract in parallel
+4. Review findings by category: Security, Gas Optimization, Best Practices
+
+## Stack
+
+- Next.js 15 (App Router)
+- TypeScript
+- Client-side analysis (no backend required)
+
+## Run Locally
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Built for Xiaomi MiMo 100T Creator Program
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Multi-agent architecture showcasing long-chain reasoning and specialized AI agent collaboration for smart contract security analysis.
 
-## Learn More
+## License
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+MIT
