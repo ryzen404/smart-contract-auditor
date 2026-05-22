@@ -264,7 +264,7 @@ export default function Home() {
                 <div key={i} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 16, padding: '28px 22px', width: 200, textAlign: 'center', boxShadow: '0 1px 3px rgba(0,0,0,0.04)', transition: 'all 0.2s', cursor: 'default' }}
                   onMouseEnter={e => { e.currentTarget.style.boxShadow = `0 8px 24px ${a.color}15`; e.currentTarget.style.borderColor = a.color + '40'; }}
                   onMouseLeave={e => { e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)'; e.currentTarget.style.borderColor = '#e5e7eb'; }}>
-                  <div style={{ width: 40, height: 40, borderRadius: 12, background: a.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px', fontSize: 18 }}>{i === 0 ? '/u{1F6E1}' : i === 1 ? '/u26A1' : '/u2713'}</div>
+                  <div style={{ width: 40, height: 40, borderRadius: 12, background: a.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 14px', fontSize: 16, fontWeight: 800, color: a.color }}>{i === 0 ? 'S' : i === 1 ? 'G' : 'P'}</div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: a.color, marginBottom: 6 }}>{a.label}</div>
                   <div style={{ fontSize: 11, color: '#94a3b8', lineHeight: 1.5 }}>{a.desc}</div>
                 </div>
@@ -360,14 +360,14 @@ export default function Home() {
 
                   {activeTab === 'gas' && result.gasTips.map((tip, i) => (
                     <div key={i} className="finding-card" style={{ padding: '14px 20px', marginBottom: 8, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                      <div style={{ width: 24, height: 24, borderRadius: 6, background: '#fffbeb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1, fontSize: 12 }}>{'/u26A1'}</div>
+                      <div style={{ width: 24, height: 24, borderRadius: 6, background: '#fffbeb', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1, fontSize: 11, fontWeight: 800, color: '#f59e0b' }}>G</div>
                       <div style={{ fontSize: 13, lineHeight: 1.6, color: '#475569' }}>{tip}</div>
                     </div>
                   ))}
 
                   {activeTab === 'practices' && result.bestPractices.map((bp, i) => (
                     <div key={i} className="finding-card" style={{ padding: '14px 20px', marginBottom: 8, display: 'flex', alignItems: 'flex-start', gap: 12 }}>
-                      <div style={{ width: 24, height: 24, borderRadius: 6, background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1, fontSize: 12 }}>{'/u2713'}</div>
+                      <div style={{ width: 24, height: 24, borderRadius: 6, background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, marginTop: 1, fontSize: 11, fontWeight: 800, color: '#10b981' }}>P</div>
                       <div style={{ fontSize: 13, lineHeight: 1.6, color: '#475569' }}>{bp}</div>
                     </div>
                   ))}
@@ -377,7 +377,7 @@ export default function Home() {
 
             {!result && !scanning && (
               <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 12 }}>
-                <div style={{ width: 64, height: 64, borderRadius: 16, background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 28 }}>{'/u{1F50D}'}</div>
+                <div style={{ width: 64, height: 64, borderRadius: 16, background: '#eef2ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, fontWeight: 800, color: '#6366f1' }}>SA</div>
                 <div style={{ color: '#94a3b8', fontSize: 14, fontWeight: 500 }}>Paste a contract to begin</div>
               </div>
             )}
